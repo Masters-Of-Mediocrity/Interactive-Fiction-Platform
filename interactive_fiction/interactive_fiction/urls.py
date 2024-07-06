@@ -25,6 +25,6 @@ urlpatterns = [
     path('password_reset/', auth_views.PasswordResetView.as_view(), name='password_reset')
 ]
 
-urlpatterns += [
-    path('', include('stories.urls')),  # Include your app's URL patterns
-]
+# urlpatterns += [
+#     path('', include('stories.urls')),  # Include your app's URL patterns
+# ]
