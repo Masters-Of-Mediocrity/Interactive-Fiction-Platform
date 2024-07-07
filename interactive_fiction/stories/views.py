@@ -1,6 +1,6 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout
-from .models import User, StoryProgress  # Replace with your model names
+from .models import User, Story, StoryProgress  # Replace with your model names
 
 
 def login_user(request):
@@ -12,6 +12,13 @@ def logout_user(request):
   logout(request)
   return redirect('home')  # Redirect to homepage after logout
 
+def story_list(request):
+  stories = Story.objects.all()
+  return render(request, 'story_list.html', {'stories': stories})
+
+def story_detail(request, story_id):
+  story = get_object_or_404(Story, pk=story_id)
+  return render(request, 'story_detail.html', {'story': story})
 
 def user_story_progress(request):
   if not request.user.is_authenticated:
