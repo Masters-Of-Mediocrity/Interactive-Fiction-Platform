@@ -1,56 +1,43 @@
+from django.contrib.auth.models import User
 from django.db import models
-from django.contrib.auth.models import AbstractUser, Group, Permission
-from django.db import models
 
-class User(AbstractUser):
-  # Inherit from AbstractUser for built-in authentication functionalities
-
-  # Add custom fields specific to your application (optional)
-  # favorite_genre = models.CharField(max_length=50, blank=True)
-  # avatar = 
-
-  groups = models.ManyToManyField(
-        Group,
-        related_name='stories_user_set',  # Change this to something unique
-        blank=True,
-        help_text='The groups this user belongs to.',
-        related_query_name='user'
-    )
-
-user_permissions = models.ManyToManyField(
-        Permission,
-        related_name='stories_user_permissions',  # Change this to something unique
-        blank=True,
-        help_text='Specific permissions for this user.',
-        related_query_name='user'
-    )
+class Profile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    bio = models.TextField(blank=True)
+    # avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
 
 class Story(models.Model):
-  title = models.CharField(max_length=255)
-  # author = models.CharField(max_length=50)  # Replace with User model in future
-  author = models.ForeignKey(User, on_delete=models.CASCADE)
-  description = models.TextField()
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    title = models.CharField(max_length=255)
+    description = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
-  def __str__(self):
-    return self.title
+    def __str__(self):
+        return self.title
+
+class Chapter(models.Model):
+    story = models.ForeignKey(Story, on_delete=models.CASCADE, related_name='chapters')
+    title = models.CharField(max_length=255)
+    content = models.TextField()
+    order = models.IntegerField()
+
+    def __str__(self):
+        return self.title
 
 class Choice(models.Model):
-  story = models.ForeignKey(Story, on_delete=models.CASCADE)  # Link choice to a story
-  text = models.CharField(max_length=255)
-  # Add a field for next_story or next_choice based on your narrative structure
+    chapter = models.ForeignKey(Chapter, on_delete=models.CASCADE, related_name='choices')
+    description = models.CharField(max_length=255)
+    next_chapter = models.ForeignKey(Chapter, on_delete=models.SET_NULL, null=True, blank=True, related_name='previous_choices')
 
-  def __str__(self):
-    return self.text[:20]  # Truncate long choice text for better display
+    def __str__(self):
+        return self.description
 
-class StoryProgress(models.Model):
-  user = models.ForeignKey(User, on_delete=models.CASCADE)  # Link to User model
-  story = models.ForeignKey(Story, on_delete=models.CASCADE)  # Link to Story model
-  current_choice = models.ForeignKey(Choice, on_delete=models.SET_NULL, null=True, blank=True)  # Track current choice within story (optional)
-  completed = models.BooleanField(default=False)  # Flag to indicate if story is completed
+class UserProgress(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    story = models.ForeignKey(Story, on_delete=models.CASCADE)
+    current_chapter = models.ForeignKey(Chapter, on_delete=models.CASCADE)
+    progress = models.JSONField(default=dict)  # Stores choices made and paths taken
 
-  class Meta:
-    unique_together = (('user', 'story'),)  # Ensure unique progress record per user/story
-
-  def __str__(self):
-    return f"{self.user.username} - {self.story.title} (Completed: {self.completed})"
-
+    def __str__(self):
+        return f"{self.user.username} - {self.story.title}"

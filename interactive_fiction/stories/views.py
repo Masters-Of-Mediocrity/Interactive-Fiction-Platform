@@ -1,29 +1,55 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import login, logout
-from .models import User, Story, StoryProgress  # Replace with your model names
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
+from .models import Story, Chapter, Choice, UserProgress
+from django.contrib.auth.models import User
+from django.views.generic import ListView, DetailView, CreateView, UpdateView
 
+class StoryListView(ListView):
+    model = Story
+    template_name = 'stories/story_list.html'
+    context_object_name = 'stories'
 
-def login_user(request):
-  # Handle login form submission and user authentication logic
-  # ...
-  return render(request, 'login.html')  # Redirect to login template
+class StoryDetailView(DetailView):
+    model = Story
+    template_name = 'stories/story_detail.html'
+    context_object_name = 'story'
 
-def logout_user(request):
-  logout(request)
-  return redirect('home')  # Redirect to homepage after logout
+class ChapterDetailView(DetailView):
+    model = Chapter
+    template_name = 'stories/chapter_detail.html'
+    context_object_name = 'chapter'
 
-def story_list(request):
-  stories = Story.objects.all()
-  return render(request, 'story_list.html', {'stories': stories})
+    def post(self, request, *args, **kwargs):
+        chapter = self.get_object()
+        choice_id = request.POST.get('choice_id')
+        choice = get_object_or_404(Choice, id=choice_id)
+        
+        # Update user progress
+        progress, created = UserProgress.objects.get_or_create(
+            user=request.user, story=chapter.story,
+            defaults={'current_chapter': choice.next_chapter}
+        )
+        if not created:
+            progress.current_chapter = choice.next_chapter
+            progress.save()
 
-def story_detail(request, story_id):
-  story = get_object_or_404(Story, pk=story_id)
-  return render(request, 'story_detail.html', {'story': story})
+        return redirect('chapter_detail', pk=choice.next_chapter.pk)
 
-def user_story_progress(request):
-  if not request.user.is_authenticated:
-    return redirect('login')  # Redirect to login if not authenticated
-  user = User.objects.get(pk=request.user.pk)
-  progress_data = StoryProgress.objects.filter(user=user)  # Get user's progress data
-  context = {'user': user, 'progress_data': progress_data}
-  return render(request, 'user_story_progress.html', context)
+class CreateStoryView(CreateView):
+    model = Story
+    fields = ['title', 'description']
+    template_name = 'stories/story_form.html'
+
+    def form_valid(self, form):
+        form.instance.author = self.request.user
+        return super().form_valid(form)
+
+class UserProgressView(DetailView):
+    model = User
+    template_name = 'stories/user_progress.html'
+    context_object_name = 'user'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['progress'] = UserProgress.objects.filter(user=self.object)
+        return context

@@ -1,16 +1,12 @@
 from django.contrib import admin
-from django.contrib.auth import views as auth_views
-from django.urls import path, include
-from . import views
+from django.urls import path
+from .views import StoryListView, StoryDetailView, ChapterDetailView, CreateStoryView, UserProgressView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('login/', auth_views.LoginView.as_view(), name='login'),
-    path('logout/', auth_views.LogoutView.as_view(), name='logout'),
-    path('password_reset/', auth_views.PasswordResetView.as_view(), name='password_reset')
-]
-
-urlpatterns += [
-  path('', views.story_list, name='story_list'),
-  path('<int:story_id>/', views.story_detail, name='story_detail'),
+    path('', StoryListView.as_view(), name='story_list'),
+    path('stories/<int:pk>/', StoryDetailView.as_view(), name='story_detail'),
+    path('chapters/<int:pk>/', ChapterDetailView.as_view(), name='chapter_detail'),
+    path('create/', CreateStoryView.as_view(), name='create_story'),
+    path('user/<int:pk>/progress/', UserProgressView.as_view(), name='user_progress'),
 ]
