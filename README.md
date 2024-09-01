@@ -3,7 +3,9 @@ Create a platform where users can write and share branching narrative stories, a
 
 # Steps to setup
 
-python manage.py makemigrations
-python manage.py migrate
-python manage.py createsuperuser
-python manage.py runserver
+<ul>
+  <li>python manage.py makemigrations</li>
+  <li>python manage.py migrate</li>
+  <li>python manage.py createsuperuser</li>
+  <li>python manage.py runserver</li>
+</ul> 
