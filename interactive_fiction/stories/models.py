@@ -6,6 +6,9 @@ class Profile(models.Model):
     bio = models.TextField(blank=True)
     # avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
 
+    def __str__(self):
+        return f"Profile of {self.user.username}"
+
 class Story(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     title = models.CharField(max_length=255)
@@ -23,7 +26,7 @@ class Chapter(models.Model):
     order = models.IntegerField()
 
     def __str__(self):
-        return self.title
+        return f"{self.story.title} - Chapter {self.order}: {self.title}"
 
 class Choice(models.Model):
     chapter = models.ForeignKey(Chapter, on_delete=models.CASCADE, related_name='choices')
@@ -31,7 +34,7 @@ class Choice(models.Model):
     next_chapter = models.ForeignKey(Chapter, on_delete=models.SET_NULL, null=True, blank=True, related_name='previous_choices')
 
     def __str__(self):
-        return self.description
+        return f"Choice: {self.description} (Next: {self.next_chapter})"
 
 class UserProgress(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -40,4 +43,4 @@ class UserProgress(models.Model):
     progress = models.JSONField(default=dict)  # Stores choices made and paths taken
 
     def __str__(self):
-        return f"{self.user.username} - {self.story.title}"
+        return f"{self.user.username}'s progress in {self.story.title}"
